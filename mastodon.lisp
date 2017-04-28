@@ -104,15 +104,15 @@
                                   (access-token-value (app-access-token app)))))
              :content content)))
 
-(defun get-account (app id)
+(defun api-get-account (app id)
   (let ((plist (api-get app (format nil "/api/v1/accounts/~A" id))))
     (apply #'make-instance '<account> plist)))
 
-(defun get-current-user (app)
+(defun api-get-current-user (app)
   (let ((plist (api-get app (format nil "/api/v1/accounts/verify_credentials"))))
     (apply #'make-instance '<account> plist)))
 
-(defun post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
+(defun api-post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
   (let ((plist
          (api-post app
                    "/api/v1/statuses"
