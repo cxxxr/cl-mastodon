@@ -12,7 +12,8 @@
            :<relationship>
            :<report>
            :<results>
-           :<status>))
+           :<status>
+           :parse))
 (in-package :mastodon.entity)
 
 (defmacro define-entity (name &body attributes)
@@ -121,3 +122,71 @@
   mentions
   tags
   application)
+
+(define-entity <application>
+  id
+  type
+  url
+  remote_url
+  preview_url
+  text_url)
+
+(defgeneric parse (entity plist))
+(defmethod parse (entity plist)
+  (apply #'make-instance entity plist))
+
+(defmethod parse ((entity (eql '<context>)) plist)
+  (make-instance entity
+                 :|ancestores| (mapcar (lambda (plist)
+                                         (parse '<status> plist))
+                                       (getf plist :|ancestores|))
+                 :|descendants| (mapcar (lambda (plist)
+                                          (parse '<status> plist))
+                                        (getf plist :|descendants|))))
+
+(defmethod parse ((entity (eql '<notification>)) plist)
+  (make-instance entity
+                 :|id| (getf plist :|id|)
+                 :|type| (getf plist :|type|)
+                 :|created_at| (getf plist :|created_at|)
+                 :|account| (parse '<account> (getf plist :|account|))
+                 :|status| (parse '<status> (getf plist :|status|))))
+
+(defmethod parse ((entity (eql '<results>)) plist)
+  (make-instance entity
+                 :|accounts| (mapcar (lambda (plist)
+                                       (parse '<account> plist))
+                                     (getf plist :|accounts|))
+                 :|statuses| (mapcar (lambda (status)
+                                       (parse '<status> status))
+                                     (getf plist :|statuses|))
+                 :|hashtags| (getf plist :|hashtags|)))
+
+(defmethod parse ((entity (eql '<status>)) plist)
+  (make-instance entity
+                 :|id| (getf plist :|id|)
+                 :|uri| (getf plist :|uri|)
+                 :|url| (getf plist :|url|)
+                 :|account| (parse '<account> (getf plist :|account|))
+                 :|in_reply_to_id| (getf plist :|in_reply_to_id|)
+                 :|in_reply_to_account_id| (getf plist :|in_reply_to_account_id|)
+                 :|reblog| (parse '<status> (getf plist :|reblog|))
+                 :|content| (getf plist :|content|)
+                 :|created_at| (getf plist :|created_at|)
+                 :|reblogs_count| (getf plist :|reblogs_count|)
+                 :|favourites_count| (getf plist :|favourites_count|)
+                 :|reblogged| (getf plist :|reblogged|)
+                 :|favourited| (getf plist :|favourited|)
+                 :|sensitive| (getf plist :|sensitive|)
+                 :|spoiler_text| (getf plist :|spoiler_text|)
+                 :|visibility| (getf plist :|visibility|)
+                 :|media_attachments| (mapcar (lambda (plist)
+                                                (parse '<attachment> plist))
+                                              (getf plist :|media_attachments|))
+                 :|mentions| (mapcar (lambda (plist)
+                                       (parse '<mention> plist))
+                                     (getf plist :|mentions|))
+                 :|tags| (mapcar (lambda (plist)
+                                   (parse '<tag> plist))
+                                 (getf plist :|tags|))
+                 :|application| (parse '<application> (getf plist :|application|))))

@@ -106,11 +106,11 @@
 
 (defun api-get-account (app id)
   (let ((plist (api-get app (format nil "/api/v1/accounts/~A" id))))
-    (apply #'make-instance '<account> plist)))
+    (parse '<account> plist)))
 
 (defun api-get-current-user (app)
   (let ((plist (api-get app (format nil "/api/v1/accounts/verify_credentials"))))
-    (apply #'make-instance '<account> plist)))
+    (parse '<account> plist)))
 
 (defun api-post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
   (let ((plist
@@ -127,15 +127,15 @@
                          `(("spoiler_text" . ,spoiler-text)))
                      ,@(when visibility
                          `(("visibility" . ,visibility)))))))
-    (apply #'make-instance '<status> plist)))
+    (parse '<status> plist)))
 
 (defun api-follow (app id)
   (let ((plist (api-post app (format nil "/api/v1/accounts/~A/follow" id))))
-    (apply #'make-instance '<relationship> plist)))
+    (parse '<relationship> plist)))
 
 (defun api-search (app query resolve)
   (let ((plist (api-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
-    (apply #'make-instance '<results> plist)))
+    (parse '<results> plist)))
 
 
 #|
