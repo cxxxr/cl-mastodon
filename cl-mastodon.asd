@@ -1,5 +1,8 @@
 (defsystem "cl-mastodon"
   :depends-on ("dexador"
-               "jonathan")
+               "jonathan"
+               "alexandria")
   :serial t
-  :components ((:file "mastodon")))
+  :components ((:file "globals")
+               (:file "entity")
+               (:file "mastodon")))
