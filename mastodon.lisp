@@ -104,8 +104,8 @@
                                   (access-token-value (app-access-token app)))))
              :content content)))
 
-(defun get-account (app)
-  (let ((plist (api-get app (format nil "/api/v1/accounts/~A" (app-id app)))))
+(defun get-account (app id)
+  (let ((plist (api-get app (format nil "/api/v1/accounts/~A" id))))
     (apply #'make-instance '<account> plist)))
 
 (defun get-current-user (app)
