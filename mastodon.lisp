@@ -90,13 +90,19 @@
          ("password" . ,password)))))
 
 (defun api-get (app api)
-  (let ((plist
-         (jojo:parse
-          (dex:get (url app api)
-                   :headers `(("Authorization" .
-                               ,(format nil "Bearer ~A"
-                                        (access-token-value (app-access-token app)))))))))
-    plist))
+  (jojo:parse
+   (dex:get (url app api)
+            :headers `(("Authorization" .
+                        ,(format nil "Bearer ~A"
+                                 (access-token-value (app-access-token app))))))))
+
+(defun api-post (app api content)
+  (jojo:parse
+   (dex:post (url app api)
+             :headers `(("Authorization" .
+                         ,(format nil "Bearer ~A"
+                                  (access-token-value (app-access-token app)))))
+             :content content)))
 
 (defun get-account (app)
   (let ((plist (api-get app (format nil "/api/v1/accounts/~A" (app-id app)))))
@@ -106,6 +112,22 @@
   (let ((plist (api-get app (format nil "/api/v1/accounts/verify_credentials"))))
     (apply #'make-instance '<account> plist)))
 
+(defun post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
+  (let ((plist
+         (api-post app
+                   "/api/v1/statuses"
+                   `(("status" . ,text)
+                     ,@(when in-reply-to-id
+                         `(("in_reply_to_id" . ,in-reply-to-id)))
+                     ,@(when media-ids
+                         `(("media_ids" . ,media-ids)))
+                     ,@(when sensitive
+                         `(("sensitive" . ,sensitive)))
+                     ,@(when spoiler-text
+                         `(("spoiler_text" . ,spoiler-text)))
+                     ,@(when visibility
+                         `(("visibility" . ,visibility)))))))
+    (apply #'make-instance '<status> plist)))
 
 
 #|
@@ -145,7 +167,7 @@
 - GET /api/v1/statuses/:id/card
 - GET /api/v1/statuses/:id/reblogged_by
 - GET /api/v1/statuses/:id/favourited_by
-- POST /api/v1/statuses
+* POST /api/v1/statuses
 - DELETE /api/v1/statuses/:id
 - POST /api/v1/statuses/:id/reblog
 - POST /api/v1/statuses/:id/unreblog
