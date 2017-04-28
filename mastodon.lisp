@@ -129,6 +129,14 @@
                          `(("visibility" . ,visibility)))))))
     (apply #'make-instance '<status> plist)))
 
+(defun api-follow (app id)
+  (let ((plist (api-post app (format nil "/api/v1/accounts/~A/follow" id))))
+    (apply #'make-instance '<relationship> plist)))
+
+(defun api-search (app query resolve)
+  (let ((plist (api-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
+    (apply #'make-instance '<results> plist)))
+
 
 #|
 
@@ -138,7 +146,7 @@
 - GET /api/v1/accounts/:id/followers
 - GET /api/v1/accounts/:id/following
 - GET /api/v1/accounts/:id/statuses
-- POST /api/v1/accounts/:id/follow
+* POST /api/v1/accounts/:id/follow
 - POST /api/v1/accounts/:id/unfollow
 - POST /api/v1/accounts/:id/block
 - POST /api/v1/accounts/:id/unblock
@@ -161,7 +169,7 @@
 - POST /api/v1/notifications/clear
 - GET /api/v1/reports
 - POST /api/v1/reports
-- GET /api/v1/search
+* GET /api/v1/search
 - GET /api/v1/statuses/:id
 - GET /api/v1/statuses/:id/context
 - GET /api/v1/statuses/:id/card
