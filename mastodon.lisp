@@ -133,6 +133,10 @@
   (let ((plist (api-post app (format nil "/api/v1/accounts/~A/follow" id))))
     (parse '<relationship> plist)))
 
+(defun api-unfollow (app id)
+  (let ((plist (api-post app (format nil "/api/v1/accounts/~A/unfollow" id))))
+    (parse '<relationship> plist)))
+
 (defun api-search (app query resolve)
   (let ((plist (api-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
     (parse '<results> plist)))
@@ -147,7 +151,7 @@
 - GET /api/v1/accounts/:id/following
 - GET /api/v1/accounts/:id/statuses
 * POST /api/v1/accounts/:id/follow
-- POST /api/v1/accounts/:id/unfollow
+* POST /api/v1/accounts/:id/unfollow
 - POST /api/v1/accounts/:id/block
 - POST /api/v1/accounts/:id/unblock
 - POST /api/v1/accounts/:id/mute
