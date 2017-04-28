@@ -96,7 +96,7 @@
                         ,(format nil "Bearer ~A"
                                  (access-token-value (app-access-token app))))))))
 
-(defun api-post (app api content)
+(defun api-post (app api &optional content)
   (jojo:parse
    (dex:post (url app api)
              :headers `(("Authorization" .
