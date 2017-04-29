@@ -6,31 +6,31 @@
 
 (defun api-post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
   (let ((plist
-         (api-post app
-                   "/api/v1/statuses"
-                   `(("status" . ,text)
-                     ,@(when in-reply-to-id
-                         `(("in_reply_to_id" . ,in-reply-to-id)))
-                     ,@(when media-ids
-                         `(("media_ids" . ,media-ids)))
-                     ,@(when sensitive
-                         `(("sensitive" . ,sensitive)))
-                     ,@(when spoiler-text
-                         `(("spoiler_text" . ,spoiler-text)))
-                     ,@(when visibility
-                         `(("visibility" . ,visibility)))))))
+         (http-post app
+                    "/api/v1/statuses"
+                    `(("status" . ,text)
+                      ,@(when in-reply-to-id
+                          `(("in_reply_to_id" . ,in-reply-to-id)))
+                      ,@(when media-ids
+                          `(("media_ids" . ,media-ids)))
+                      ,@(when sensitive
+                          `(("sensitive" . ,sensitive)))
+                      ,@(when spoiler-text
+                          `(("spoiler_text" . ,spoiler-text)))
+                      ,@(when visibility
+                          `(("visibility" . ,visibility)))))))
     (parse '<status> plist)))
 
 (defun api-follow (app id)
-  (let ((plist (api-post app (format nil "/api/v1/accounts/~A/follow" id))))
+  (let ((plist (http-post app (format nil "/api/v1/accounts/~A/follow" id))))
     (parse '<relationship> plist)))
 
 (defun api-unfollow (app id)
-  (let ((plist (api-post app (format nil "/api/v1/accounts/~A/unfollow" id))))
+  (let ((plist (http-post app (format nil "/api/v1/accounts/~A/unfollow" id))))
     (parse '<relationship> plist)))
 
 (defun api-search (app query resolve)
-  (let ((plist (api-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
+  (let ((plist (http-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
     (parse '<results> plist)))
 
 

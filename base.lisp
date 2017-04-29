@@ -105,14 +105,14 @@
          ("username" . ,username)
          ("password" . ,password)))))
 
-(defun api-get (app api)
+(defun http-get (app api)
   (jojo:parse
    (dex:get (url app api)
             :headers `(("Authorization" .
                         ,(format nil "Bearer ~A"
                                  (access-token-value (app-access-token app))))))))
 
-(defun api-post (app api &optional content)
+(defun http-post (app api &optional content)
   (jojo:parse
    (dex:post (url app api)
              :headers `(("Authorization" .
