@@ -1,19 +1,19 @@
 (defpackage :mastodon.entity
-  (:use :cl)
-  (:export :<account>
-           :<application>
-           :<attachment>
-           :<card>
-           :<context>
-           :<error>
-           :<instance>
-           :<mention>
-           :<notification>
-           :<relationship>
-           :<report>
-           :<results>
-           :<status>
-           :parse))
+  (:use #:cl)
+  (:export #:<account>
+           #:<application>
+           #:<attachment>
+           #:<card>
+           #:<context>
+           #:<error>
+           #:<instance>
+           #:<mention>
+           #:<notification>
+           #:<relationship>
+           #:<report>
+           #:<results>
+           #:<status>
+           #:parse))
 (in-package :mastodon.entity)
 
 (defmacro define-entity (name &body attributes)

@@ -1,8 +1,8 @@
 (defpackage :mastodon.config
-  (:use :cl)
-  (:export :+client-name+
-           :ensure-config-directory
-           :get-config-file))
+  (:use #:cl)
+  (:export #:+client-name+
+           #:ensure-config-directory
+           #:get-config-file))
 (in-package :mastodon.config)
 
 (defparameter +client-name+ "cl-mastodon")

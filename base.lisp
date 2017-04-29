@@ -1,14 +1,14 @@
 (defpackage :mastodon.base
-  (:use :cl
-        :mastodon.config)
-  (:export :make-app
-           :url
-           :register-app
-           :get-authorization-uri
-           :init-access-token-with-code
-           :init-access-token-with-password
-           :http-get
-           :http-post))
+  (:use #:cl
+        #:mastodon.config)
+  (:export #:make-app
+           #:url
+           #:register-app
+           #:get-authorization-uri
+           #:init-access-token-with-code
+           #:init-access-token-with-password
+           #:http-get
+           #:http-post))
 (in-package :mastodon.base)
 
 (defstruct access-token
