@@ -1,13 +1,14 @@
 (defpackage :mastodon.base
-  (:use :cl)
+  (:use :cl
+        :mastodon.config)
   (:export :make-app
            :url
            :register-app
            :get-authorization-uri
            :init-access-token-with-code
            :init-access-token-with-password
-           :api-get
-           :api-post))
+           :http-get
+           :http-post))
 (in-package :mastodon.base)
 
 (defstruct access-token
@@ -44,11 +45,14 @@
                  :server-name server-name
                  :schema (if secure "https" "http")))
 
-(defun url (app api)
-  (format nil "~A://~A~A"
+(defun url (app api &optional query)
+  (format nil "~A://~A~A~A"
           (app-schema app)
           (app-server-name app)
-          api))
+          api
+          (if (null query)
+              ""
+              (concatenate 'string "?" (quri:url-encode-params query)))))
 
 (defun register-app (app)
   (ensure-config-directory)
@@ -74,11 +78,11 @@
 
 (defun get-authorization-uri (app)
   (format nil
-          (url app (format nil "/oauth/authorize?~{~A=~A~^&~}"
-                           `("client_id" ,(app-client-id app)
-                             "response_type" "code"
-                             "redirect_uri" "urn:ietf:wg:oauth:2.0:oob"
-                             "scope" "read+write+follow")))))
+          (url app "/oauth/authorize"
+               `(("client_id" . ,(app-client-id app))
+                 ("response_type" . "code")
+                 ("redirect_uri" . "urn:ietf:wg:oauth:2.0:oob")
+                 ("scope" . "read write follow")))))
 
 (flet ((f (app content)
          (let ((plist
@@ -105,9 +109,9 @@
          ("username" . ,username)
          ("password" . ,password)))))
 
-(defun http-get (app api)
+(defun http-get (app api &optional query)
   (jojo:parse
-   (dex:get (url app api)
+   (dex:get (url app api query)
             :headers `(("Authorization" .
                         ,(format nil "Bearer ~A"
                                  (access-token-value (app-access-token app))))))))
