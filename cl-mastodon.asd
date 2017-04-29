@@ -5,4 +5,6 @@
   :serial t
   :components ((:file "config")
                (:file "entity")
+               (:file "base")
+               (:file "apps")
                (:file "mastodon")))
