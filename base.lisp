@@ -2,7 +2,6 @@
   (:use #:cl
         #:mastodon.config)
   (:export #:make-app
-           #:url
            #:register-app
            #:get-authorization-uri
            #:init-access-token-with-code

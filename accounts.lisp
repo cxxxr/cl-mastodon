@@ -1,5 +1,6 @@
 (defpackage #:mastodon.accounts
   (:use #:cl
+        #:mastodon.util
         #:mastodon.entity
         #:mastodon.base)
   (:export #:get-account
@@ -16,16 +17,6 @@
            #:relationships
            #:search-accounts))
 (in-package #:mastodon.accounts)
-
-(defmacro options (&rest options)
-  (let ((glist (gensym)))
-    `(let ((,glist '()))
-       ,@(mapcar (lambda (o)
-                   `(when ,o
-                      (push (cons ,(ppcre:regex-replace-all "-" (string o) "_") ',o)
-                            ,glist)))
-                 (reverse options))
-       ,glist)))
 
 (defun get-account (app id)
   (let ((plist (http-get app (format nil "/api/v1/accounts/~D" id))))
