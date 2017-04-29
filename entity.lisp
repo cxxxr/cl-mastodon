@@ -132,6 +132,7 @@
   text_url)
 
 (defgeneric parse (entity plist))
+
 (defmethod parse (entity plist)
   (apply #'make-instance entity plist))
 

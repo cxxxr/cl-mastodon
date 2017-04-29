@@ -6,5 +6,5 @@
   :components ((:file "config")
                (:file "entity")
                (:file "base")
-               (:file "apps")
+               (:file "accounts")
                (:file "mastodon")))
