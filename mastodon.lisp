@@ -1,6 +1,6 @@
 (defpackage :mastodon
   (:use :cl
-        :mastodon.globals
+        :mastodon.config
         :mastodon.entity))
 (in-package :mastodon)
 
@@ -45,15 +45,25 @@
           api))
 
 (defun register-app (app)
-  (let* ((result
-          (dex:post (url app "/api/v1/apps")
-                    :content `(("client_name" . ,+client-name+)
-                               ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
-                               ("scopes" . "read write follow"))))
-         (json (jojo:parse result)))
+  (ensure-config-directory)
+  (let* ((apps-file (get-config-file "apps"))
+         (json
+          (if (uiop:file-exists-p apps-file)
+              (with-open-file (in apps-file) (read in))
+              (let* ((result
+                      (dex:post (url app "/api/v1/apps")
+                                :content `(("client_name" . ,+client-name+)
+                                           ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
+                                           ("scopes" . "read write follow")))))
+                (jojo:parse result)))))
     (setf (app-client-secret app) (getf json :|client_secret|))
     (setf (app-client-id app) (getf json :|client_id|))
     (setf (app-id app) (getf json :|id|))
+    (with-open-file (out apps-file
+                         :direction :output
+                         :if-does-not-exist :create
+                         :if-exists :supersede)
+      (print json out))
     app))
 
 (defun get-authorization-uri (app)
