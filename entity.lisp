@@ -123,13 +123,9 @@
   tags
   application)
 
-(define-entity <application>
-  id
-  type
-  url
-  remote_url
-  preview_url
-  text_url)
+(define-entity <tag>
+  name
+  url)
 
 (defgeneric parse (entity plist))
 
@@ -171,7 +167,8 @@
                  :|account| (parse '<account> (getf plist :|account|))
                  :|in_reply_to_id| (getf plist :|in_reply_to_id|)
                  :|in_reply_to_account_id| (getf plist :|in_reply_to_account_id|)
-                 :|reblog| (parse '<status> (getf plist :|reblog|))
+                 :|reblog| (let ((reblog (getf plist :|reblog|)))
+                             (if (null reblog) nil (parse '<status> (getf plist :|reblog|))))
                  :|content| (getf plist :|content|)
                  :|created_at| (getf plist :|created_at|)
                  :|reblogs_count| (getf plist :|reblogs_count|)
