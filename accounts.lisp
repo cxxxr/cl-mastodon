@@ -14,60 +14,60 @@
                  (reverse options))
        ,glist)))
 
-(defun api-get-account (app id)
+(defun get-account (app id)
   (let ((plist (http-get app (format nil "/api/v1/accounts/~D" id))))
     (parse '<account> plist)))
 
-(defun api-get-current-user (app)
+(defun get-current-user (app)
   (let ((plist (http-get app "/api/v1/accounts/verify_credentials")))
     (parse '<account> plist)))
 
-(defun api-followers (app id &key max-id since-id limit)
+(defun followers (app id &key max-id since-id limit)
   (let ((json (http-get app (format nil "/api/v1/accounts/~D/followers" id)
                         (options max-id since-id limit))))
     (mapcar (lambda (plist)
               (parse '<account> plist))
             json)))
 
-(defun api-following (app id &key max-id since-id limit)
+(defun following (app id &key max-id since-id limit)
   (let ((json (http-get app (format nil "/api/v1/accounts/~D/following" id)
                         (options max-id since-id limit))))
     (mapcar (lambda (plist)
               (parse '<account> plist))
             json)))
 
-(defun api-account-statuses (app id &key only-media exculude-replies max-id since-id limit)
+(defun account-statuses (app id &key only-media exculude-replies max-id since-id limit)
   (let ((json (http-get app (format nil "/api/v1/accounts/~D/statuses" id)
                         (options only-media exculude-replies max-id since-id limit))))
     (mapcar (lambda (plist)
               (parse '<status> plist))
             json)))
 
-(defun api-follow (app id)
+(defun follow-account (app id)
   (let ((plist (http-post app (format nil "/api/v1/accounts/~D/follow" id))))
     (parse '<relationship> plist)))
 
-(defun api-unfollow (app id)
+(defun unfollow-account (app id)
   (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unfollow" id))))
     (parse '<relationship> plist)))
 
-(defun api-block (app id)
+(defun block-account (app id)
   (let ((plist (http-post app (format nil "/api/v1/accounts/~D/block" id))))
     (parse '<relationship> plist)))
 
-(defun api-unblock (app id)
+(defun unblock-account (app id)
   (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unblock" id))))
     (parse '<relationship> plist)))
 
-(defun api-mute (app id)
+(defun mute-account (app id)
   (let ((plist (http-post app (format nil "/api/v1/accounts/~D/mute" id))))
     (parse '<relationship> plist)))
 
-(defun api-unmute (app id)
+(defun unmute-account (app id)
   (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unmute" id))))
     (parse '<relationship> plist)))
 
-(defun api-relationships (app &rest ids)
+(defun relationships (app &rest ids)
   (let ((json
          (http-get app "/api/v1/accounts/relationships"
                    (mapcar (lambda (id)
@@ -77,7 +77,7 @@
               (parse '<relationship> plist))
             json)))
 
-(defun api-search-accounts (app query &key limit)
+(defun search-accounts (app query &key limit)
   (let ((json (http-get app
                         "/api/v1/accounts/search"
                         (acons "q" query (options limit)))))
