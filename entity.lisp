@@ -67,10 +67,11 @@
   error)
 
 (define-entity <instance>
-  url
+  uri
   title
   description
-  email)
+  email
+  version)
 
 (define-entity <mention>
   url
