@@ -7,7 +7,8 @@
            #:init-access-token-with-code
            #:init-access-token-with-password
            #:http-get
-           #:http-post))
+           #:http-post
+           #:http-delete))
 (in-package :mastodon.base)
 
 (defstruct access-token
@@ -108,17 +109,22 @@
          ("username" . ,username)
          ("password" . ,password)))))
 
+(defun headers (app)
+  `(("Authorization" .
+     ,(format nil "Bearer ~A"
+              (access-token-value (app-access-token app))))))
+
 (defun http-get (app api &optional query)
   (jojo:parse
    (dex:get (url app api query)
-            :headers `(("Authorization" .
-                        ,(format nil "Bearer ~A"
-                                 (access-token-value (app-access-token app))))))))
+            :headers (headers app))))
 
 (defun http-post (app api &optional content)
   (jojo:parse
    (dex:post (url app api)
-             :headers `(("Authorization" .
-                         ,(format nil "Bearer ~A"
-                                  (access-token-value (app-access-token app)))))
+             :headers (headers app)
              :content content)))
+
+(defun http-delete (app api)
+  (dex:delete (url app api)
+              :headers (headers app)))

@@ -22,111 +22,116 @@
            ))
 (in-package :mastodon)
 
+(defun option-variable (opt)
+  (etypecase opt
+    (symbol opt)
+    (string opt)
+    (cons (first opt))))
+
+(defun option-name (opt)
+  (etypecase opt
+    (symbol (ppcre:regex-replace-all "-" (string opt) "_"))
+    (string opt)
+    (cons (second opt))))
+
+(defun array-option-p (opt)
+  (and (consp opt) (eq :array (third opt))))
+
 (defmacro options (&rest options)
   (let ((glist (gensym)))
     `(let ((,glist '()))
        ,@(mapcar (lambda (o)
-                   `(when ,o
-                      (push (cons ,(ppcre:regex-replace-all "-" (string o) "_") ',o)
+                   `(when ,(option-variable o)
+                      (push (cons ,(option-name o) ',(option-variable o))
                             ,glist)))
                  (reverse options))
        ,glist)))
 
-(defun get-account (app id)
-  (let ((json (http-get app (format nil "/api/v1/accounts/~D" id))))
-    (parse '<account> json)))
+(defun gen-options (options)
+  (cond ((null options) '())
+        ((eq '&key (car options))
+         `(options ,@(cdr options)))
+        ((array-option-p (car options))
+         `(nconc (mapcar (lambda (x)
+                           (cons ,(format nil "~A[]" (option-name (car options)))
+                                 (prin1-to-string x)))
+                         ,(option-variable (car options)))
+                 ,(gen-options (cdr options))))
+        (t
+         `(acons ,(option-name (car options))
+                 ,(option-variable (car options))
+                 ,(gen-options (cdr options))))))
 
-(defun get-current-user (app)
-  (let ((json (http-get app "/api/v1/accounts/verify_credentials")))
-    (parse '<account> json)))
+(defun options-to-lambda-list (options)
+  (mapcar #'option-variable options))
 
-(defun followers (app id &key max-id since-id limit)
-  (let ((json (http-get app (format nil "/api/v1/accounts/~D/followers" id)
-                        (options max-id since-id limit))))
-    (parse-list '<account> json)))
+(defmacro define-api (name http-method api (&rest vars) options result-type)
+  (let ((_json (gensym)))
+    `(defun ,name (app ,@vars ,@(options-to-lambda-list options))
+       (let ((,_json
+              ,(let ((uri `(format nil ,api ,@vars)))
+                 (ecase http-method
+                   (:get `(http-get app ,uri ,(gen-options options)))
+                   (:post `(http-post app ,uri ,(gen-options options)))
+                   (:delete `(http-delete app ,uri))))))
+         (declare (ignorable ,_json))
+         ,(cond ((null result-type) (values))
+                ((and (consp result-type)
+                      (eq 'list (car result-type)))
+                 `(parse-list ',(cadr result-type) ,_json))
+                (t
+                 `(parse ',result-type ,_json)))))))
 
-(defun following (app id &key max-id since-id limit)
-  (let ((json (http-get app (format nil "/api/v1/accounts/~D/following" id)
-                        (options max-id since-id limit))))
-    (parse-list '<account> json)))
-
-(defun account-statuses (app id &key only-media exculude-replies max-id since-id limit)
-  (let ((json (http-get app (format nil "/api/v1/accounts/~D/statuses" id)
-                        (options only-media exculude-replies max-id since-id limit))))
-    (parse-list '<status> json)))
-
-(defun follow-account (app id)
-  (let ((json (http-post app (format nil "/api/v1/accounts/~D/follow" id))))
-    (parse '<relationship> json)))
-
-(defun unfollow-account (app id)
-  (let ((json (http-post app (format nil "/api/v1/accounts/~D/unfollow" id))))
-    (parse '<relationship> json)))
-
-(defun block-account (app id)
-  (let ((json (http-post app (format nil "/api/v1/accounts/~D/block" id))))
-    (parse '<relationship> json)))
-
-(defun unblock-account (app id)
-  (let ((json (http-post app (format nil "/api/v1/accounts/~D/unblock" id))))
-    (parse '<relationship> json)))
-
-(defun mute-account (app id)
-  (let ((json (http-post app (format nil "/api/v1/accounts/~D/mute" id))))
-    (parse '<relationship> json)))
-
-(defun unmute-account (app id)
-  (let ((json (http-post app (format nil "/api/v1/accounts/~D/unmute" id))))
-    (parse '<relationship> json)))
-
-(defun relationships (app &rest ids)
-  (let ((json
-         (http-get app "/api/v1/accounts/relationships"
-                   (mapcar (lambda (id)
-                             `("id[]" . ,(prin1-to-string id)))
-                           ids))))
-    (parse-list '<relationship> json)))
-
-(defun search-accounts (app query &key limit)
-  (let ((json (http-get app
-                        "/api/v1/accounts/search"
-                        (acons "q" query (options limit)))))
-    (parse-list '<account> json)))
-
-(defun blocks (app &key max-id since-id limit)
-  (let ((json (http-get app
-                        "/api/v1/blocks"
-                        (options max-id since-id limit))))
-    (parse-list '<account> json)))
-
-(defun favourites (app &key max-id since-id limit)
-  (let ((json (http-get app
-                        "/api/v1/favourites"
-                        (options max-id since-id limit))))
-    (parse-list '<status> json)))
-
-(defun follow-requests (app &key max-id since-id limit)
-  (let ((json (http-get app
-                        "/api/v1/follow_requests"
-                        (options max-id since-id limit))))
-    (parse-list '<account> json)))
-
-
-(defun search-content (app query resolve)
-  (let ((json (http-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
-    (parse '<results> json)))
-
-(defun post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
-  (let ((json
-         (http-post app
-                    "/api/v1/statuses"
-                    (acons "status" text
-                           (options in-reply-to-id
-                                    media-ids
-                                    sensitive
-                                    spoiler-text
-                                    visibility)))))
-    (parse '<status> json)))
+(define-api get-account :get "/api/v1/accounts/~D" (id) () <account>)
+(define-api get-current-user :get "/api/v1/accounts/verify_credentials" () () <account>)
+(define-api followers :get "/api/v1/accounts/~D/followers" (id) (&key max-id since-id limit)
+  (list <account>))
+(define-api following :get "/api/v1/accounts/~D/following" (id) (&key max-id since-id limit)
+  (list <account>))
+(define-api account-statuses :get "/api/v1/accounts/~D/statuses" (id)
+  (&key only-media exculude-replies max-id since-id limit)
+  (list <status>))
+(define-api follow-account :post "/api/v1/accounts/~D/follow" (id) () <relationship>)
+(define-api unfollow-account :post "/api/v1/accounts/~D/unfollow" (id) () <relationship>)
+(define-api block-account :post "/api/v1/accounts/~D/block" (id) () <relationship>)
+(define-api unblock-account :post "/api/v1/accounts/~D/unblock" (id) () <relationship>)
+(define-api mute-account :post "/api/v1/accounts/~D/mute" (id) () <relationship>)
+(define-api unmute-account :post "/api/v1/accounts/~D/unmute" (id) () <relationship>)
+(define-api relationships :get "/api/v1/accounts/relationships" () ((ids "id" :array))
+  (list <relationship>))
+(define-api search-accounts :get "/api/v1/accounts/search" () ((query "q") &key limit)
+  (list <account>))
+(define-api blocks :get "/api/v1/blocks" () (&key max-id since-id limit) (list <account>))
+(define-api favourites :get "/api/v1/favourites" () (&key max-id since-id limit) (list <status>))
+(define-api follow-requests :get "/api/v1/follow_requests" () (&key max-id since-id limit)
+  (list <account>))
+(define-api follow-request-authorize :post "/api/v1/follow_requests/~D/authorize" (id) () nil)
+(define-api follow-request-reject :post "/api/v1/follow_requests/~D/reject" (id) () nil)
+(define-api follows :post "/api/v1/follows" () (uri) <account>)
+(define-api instance :get "/api/v1/instance" () () <instance>)
+(define-api upload-media :post "/api/v1/media" () (file) <attachment>)
+(define-api mutes :get "/api/v1/mutes" () (&key max-id since-id limit) <account>)
+(define-api notifications :get "/api/v1/notifications" () (&key max-id since-id limit)
+  (list <notification>))
+(define-api notification :get "/api/v1/notification/~D" (id) () <notification>)
+(define-api clear-notifications :post "/api/v1/notifications/clear" () () nil)
+(define-api get-reports :get "/api/v1/reports" () () (list <report>))
+(define-api report :post "/api/v1/reports" () (account-id (status-ids "status-ids" :array) comment)
+  <report>)
+(define-api search-content :get "/api/v1/search" () ((query "q") resolve) <results>)
+(define-api get-status :get "/api/v1/statuses/~D" (id) () <status>)
+(define-api get-statsu-context :get "/api/v1/statuses/~D/context" (id) () <context>)
+(define-api get-status-card :get "/api/v1/statuses/~D/card" (id) () <card>)
+(define-api get-reblogged-by :get "/api/v1/statuses/~D/reblogged_by" (id)
+  (&key max-id since-id limit)
+  (list <account>))
+(define-api get-favourited-by :get "/api/v1/statuses/~D/favourited_by" (id)
+  (&key max-id since-id limit)
+  (list <account>))
+(define-api post-status :post "/api/v1/statuses" ()
+  (text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
+  <status>)
+(define-api delete-status :delete "/api/v1/statuses/~D" (id) () nil)
 
 
 #|
@@ -148,26 +153,26 @@
 * POST /api/v1/apps
 * GET /api/v1/blocks
 * GET /api/v1/favourites
-- GET /api/v1/follow_requests
-- POST /api/v1/follow_requests/:id/authorize
-- POST /api/v1/follow_requests/:id/reject
-- POST /api/v1/follows
-- GET /api/v1/instance
-- POST /api/v1/media
-- GET /api/v1/mutes
-- GET /api/v1/notifications
-- GET /api/v1/notifications/:id
-- POST /api/v1/notifications/clear
-- GET /api/v1/reports
-- POST /api/v1/reports
+* GET /api/v1/follow_requests
+* POST /api/v1/follow_requests/:id/authorize
+* POST /api/v1/follow_requests/:id/reject
+* POST /api/v1/follows
+* GET /api/v1/instance
+* POST /api/v1/media
+* GET /api/v1/mutes
+* GET /api/v1/notifications
+* GET /api/v1/notifications/:id
+* POST /api/v1/notifications/clear
+* GET /api/v1/reports
+* POST /api/v1/reports
 * GET /api/v1/search
-- GET /api/v1/statuses/:id
-- GET /api/v1/statuses/:id/context
-- GET /api/v1/statuses/:id/card
-- GET /api/v1/statuses/:id/reblogged_by
-- GET /api/v1/statuses/:id/favourited_by
+* GET /api/v1/statuses/:id
+* GET /api/v1/statuses/:id/context
+* GET /api/v1/statuses/:id/card
+* GET /api/v1/statuses/:id/reblogged_by
+* GET /api/v1/statuses/:id/favourited_by
 * POST /api/v1/statuses
-- DELETE /api/v1/statuses/:id
+* DELETE /api/v1/statuses/:id
 - POST /api/v1/statuses/:id/reblog
 - POST /api/v1/statuses/:id/unreblog
 - POST /api/v1/statuses/:id/favourite
