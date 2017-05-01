@@ -7,5 +7,4 @@
                (:file "config")
                (:file "entity")
                (:file "base")
-               (:file "accounts")
                (:file "mastodon")))

@@ -2,10 +2,111 @@
   (:use #:cl
         #:mastodon.config
         #:mastodon.entity
-        #:mastodon.base))
+        #:mastodon.base)
+  (:export #:get-account
+           #:get-current-user
+           #:followers
+           #:following
+           #:account-statuses
+           #:follow-account
+           #:unfollow-account
+           #:block-account
+           #:unblock-account
+           #:mute-account
+           #:unmute-account
+           #:relationships
+           #:search-accounts
+
+           #:search-content
+           #:post-status
+           ))
 (in-package :mastodon)
 
-(defun api-post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
+(defun get-account (app id)
+  (let ((plist (http-get app (format nil "/api/v1/accounts/~D" id))))
+    (parse '<account> plist)))
+
+(defun get-current-user (app)
+  (let ((plist (http-get app "/api/v1/accounts/verify_credentials")))
+    (parse '<account> plist)))
+
+(defun followers (app id &key max-id since-id limit)
+  (let ((json (http-get app (format nil "/api/v1/accounts/~D/followers" id)
+                        (options max-id since-id limit))))
+    (mapcar (lambda (plist)
+              (parse '<account> plist))
+            json)))
+
+(defun following (app id &key max-id since-id limit)
+  (let ((json (http-get app (format nil "/api/v1/accounts/~D/following" id)
+                        (options max-id since-id limit))))
+    (mapcar (lambda (plist)
+              (parse '<account> plist))
+            json)))
+
+(defun account-statuses (app id &key only-media exculude-replies max-id since-id limit)
+  (let ((json (http-get app (format nil "/api/v1/accounts/~D/statuses" id)
+                        (options only-media exculude-replies max-id since-id limit))))
+    (mapcar (lambda (plist)
+              (parse '<status> plist))
+            json)))
+
+(defun follow-account (app id)
+  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/follow" id))))
+    (parse '<relationship> plist)))
+
+(defun unfollow-account (app id)
+  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unfollow" id))))
+    (parse '<relationship> plist)))
+
+(defun block-account (app id)
+  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/block" id))))
+    (parse '<relationship> plist)))
+
+(defun unblock-account (app id)
+  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unblock" id))))
+    (parse '<relationship> plist)))
+
+(defun mute-account (app id)
+  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/mute" id))))
+    (parse '<relationship> plist)))
+
+(defun unmute-account (app id)
+  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unmute" id))))
+    (parse '<relationship> plist)))
+
+(defun relationships (app &rest ids)
+  (let ((json
+         (http-get app "/api/v1/accounts/relationships"
+                   (mapcar (lambda (id)
+                             `("id[]" . ,(prin1-to-string id)))
+                           ids))))
+    (mapcar (lambda (plist)
+              (parse '<relationship> plist))
+            json)))
+
+(defun search-accounts (app query &key limit)
+  (let ((json (http-get app
+                        "/api/v1/accounts/search"
+                        (acons "q" query (options limit)))))
+    (mapcar (lambda (plist)
+              (parse '<account> plist))
+            json)))
+
+(defun blocks (app &key max-id sice-id limit)
+  (let ((json (http-get app
+                        "/api/v1/blocks"
+                        (options max-id sice-id limit))))
+    (mapcar (lambda (plist)
+              (parse '<account> plist))
+            json)))
+
+
+(defun search-content (app query resolve)
+  (let ((plist (http-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
+    (parse '<results> plist)))
+
+(defun post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
   (let ((plist
          (http-post app
                     "/api/v1/statuses"
@@ -21,10 +122,6 @@
                       ,@(when visibility
                           `(("visibility" . ,visibility)))))))
     (parse '<status> plist)))
-
-(defun api-search (app query resolve)
-  (let ((plist (http-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
-    (parse '<results> plist)))
 
 
 #|
