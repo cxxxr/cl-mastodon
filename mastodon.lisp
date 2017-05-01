@@ -33,12 +33,12 @@
        ,glist)))
 
 (defun get-account (app id)
-  (let ((plist (http-get app (format nil "/api/v1/accounts/~D" id))))
-    (parse '<account> plist)))
+  (let ((json (http-get app (format nil "/api/v1/accounts/~D" id))))
+    (parse '<account> json)))
 
 (defun get-current-user (app)
-  (let ((plist (http-get app "/api/v1/accounts/verify_credentials")))
-    (parse '<account> plist)))
+  (let ((json (http-get app "/api/v1/accounts/verify_credentials")))
+    (parse '<account> json)))
 
 (defun followers (app id &key max-id since-id limit)
   (let ((json (http-get app (format nil "/api/v1/accounts/~D/followers" id)
@@ -56,28 +56,28 @@
     (parse-list '<status> json)))
 
 (defun follow-account (app id)
-  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/follow" id))))
-    (parse '<relationship> plist)))
+  (let ((json (http-post app (format nil "/api/v1/accounts/~D/follow" id))))
+    (parse '<relationship> json)))
 
 (defun unfollow-account (app id)
-  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unfollow" id))))
-    (parse '<relationship> plist)))
+  (let ((json (http-post app (format nil "/api/v1/accounts/~D/unfollow" id))))
+    (parse '<relationship> json)))
 
 (defun block-account (app id)
-  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/block" id))))
-    (parse '<relationship> plist)))
+  (let ((json (http-post app (format nil "/api/v1/accounts/~D/block" id))))
+    (parse '<relationship> json)))
 
 (defun unblock-account (app id)
-  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unblock" id))))
-    (parse '<relationship> plist)))
+  (let ((json (http-post app (format nil "/api/v1/accounts/~D/unblock" id))))
+    (parse '<relationship> json)))
 
 (defun mute-account (app id)
-  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/mute" id))))
-    (parse '<relationship> plist)))
+  (let ((json (http-post app (format nil "/api/v1/accounts/~D/mute" id))))
+    (parse '<relationship> json)))
 
 (defun unmute-account (app id)
-  (let ((plist (http-post app (format nil "/api/v1/accounts/~D/unmute" id))))
-    (parse '<relationship> plist)))
+  (let ((json (http-post app (format nil "/api/v1/accounts/~D/unmute" id))))
+    (parse '<relationship> json)))
 
 (defun relationships (app &rest ids)
   (let ((json
@@ -93,19 +93,31 @@
                         (acons "q" query (options limit)))))
     (parse-list '<account> json)))
 
-(defun blocks (app &key max-id sice-id limit)
+(defun blocks (app &key max-id since-id limit)
   (let ((json (http-get app
                         "/api/v1/blocks"
-                        (options max-id sice-id limit))))
+                        (options max-id since-id limit))))
+    (parse-list '<account> json)))
+
+(defun favourites (app &key max-id since-id limit)
+  (let ((json (http-get app
+                        "/api/v1/favourites"
+                        (options max-id since-id limit))))
+    (parse-list '<status> json)))
+
+(defun follow-requests (app &key max-id since-id limit)
+  (let ((json (http-get app
+                        "/api/v1/follow_requests"
+                        (options max-id since-id limit))))
     (parse-list '<account> json)))
 
 
 (defun search-content (app query resolve)
-  (let ((plist (http-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
-    (parse '<results> plist)))
+  (let ((json (http-get app (format nil "/api/v1/search?q=~A&resolve=~A" query resolve))))
+    (parse '<results> json)))
 
 (defun post-status (app text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
-  (let ((plist
+  (let ((json
          (http-post app
                     "/api/v1/statuses"
                     (acons "status" text
@@ -114,7 +126,7 @@
                                     sensitive
                                     spoiler-text
                                     visibility)))))
-    (parse '<status> plist)))
+    (parse '<status> json)))
 
 
 #|
@@ -133,9 +145,9 @@
 * POST /api/v1/accounts/:id/unmute
 * GET /api/v1/accounts/relationships
 * GET /api/v1/accounts/search
-- POST /api/v1/apps
-- GET /api/v1/blocks
-- GET /api/v1/favourites
+* POST /api/v1/apps
+* GET /api/v1/blocks
+* GET /api/v1/favourites
 - GET /api/v1/follow_requests
 - POST /api/v1/follow_requests/:id/authorize
 - POST /api/v1/follow_requests/:id/reject
