@@ -5,48 +5,48 @@
         #:mastodon.base))
 (in-package :mastodon)
 
-(defun option-variable (opt)
-  (etypecase opt
-    (symbol opt)
-    (string opt)
-    (cons (first opt))))
-
-(defun option-name (opt)
-  (etypecase opt
-    (symbol (ppcre:regex-replace-all "-" (string opt) "_"))
-    (string opt)
-    (cons (second opt))))
-
-(defun array-option-p (opt)
-  (and (consp opt) (eq :array (third opt))))
-
-(defmacro options (&rest options)
-  (let ((glist (gensym)))
-    `(let ((,glist '()))
-       ,@(mapcar (lambda (o)
-                   `(when ,(option-variable o)
-                      (push (cons ,(option-name o) ',(option-variable o))
-                            ,glist)))
-                 (reverse options))
-       ,glist)))
-
-(defun gen-options (options)
-  (cond ((null options) '())
-        ((eq '&key (car options))
-         `(options ,@(cdr options)))
-        ((array-option-p (car options))
-         `(nconc (mapcar (lambda (x)
-                           (cons ,(format nil "~A[]" (option-name (car options)))
-                                 (prin1-to-string x)))
-                         ,(option-variable (car options)))
-                 ,(gen-options (cdr options))))
-        (t
-         `(acons ,(option-name (car options))
-                 ,(option-variable (car options))
-                 ,(gen-options (cdr options))))))
-
-(defun options-to-lambda-list (options)
-  (mapcar #'option-variable options))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun option-variable (opt)
+    (etypecase opt
+      (symbol opt)
+      (string opt)
+      (cons (first opt))))
+  
+  (defun option-name (opt)
+    (etypecase opt
+      (symbol (ppcre:regex-replace-all "-" (string opt) "_"))
+      (string opt)
+      (cons (second opt))))
+  
+  (defun array-option-p (opt)
+    (and (consp opt) (eq :array (third opt))))
+  
+  (defmacro options (&rest options)
+    (let ((glist (gensym)))
+      `(let ((,glist '()))
+         ,@(mapcar (lambda (o)
+                     `(when ,(option-variable o)
+                        (push (cons ,(option-name o) ',(option-variable o))
+                              ,glist)))
+                   (reverse options))
+         ,glist)))
+  
+  (defun gen-options (options)
+    (cond ((null options) '())
+          ((eq '&key (car options))
+           `(options ,@(cdr options)))
+          ((array-option-p (car options))
+           `(nconc (mapcar (lambda (x)
+                             (cons ,(format nil "~A[]" (option-name (car options)))
+                                   (prin1-to-string x)))
+                           ,(option-variable (car options)))
+                   ,(gen-options (cdr options))))
+          (t
+           `(acons ,(option-name (car options))
+                   ,(option-variable (car options))
+                   ,(gen-options (cdr options))))))
+  (defun options-to-lambda-list (options)
+    (mapcar #'option-variable options)))
 
 (defmacro define-api (name http-method api (&rest vars) options result-type)
   (let ((_json (gensym)))
