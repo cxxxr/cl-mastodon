@@ -13,7 +13,8 @@
            #:<report>
            #:<results>
            #:<status>
-           #:parse))
+           #:parse
+           #:parse-list))
 (in-package :mastodon.entity)
 
 (defmacro define-entity (name &body attributes)
@@ -188,3 +189,8 @@
                                    (parse '<tag> plist))
                                  (getf plist :|tags|))
                  :|application| (parse '<application> (getf plist :|application|))))
+
+(defun parse-list (entity list)
+  (mapcar (lambda (plist)
+            (parse entity plist))
+          list))

@@ -33,23 +33,17 @@
 (defun followers (app id &key max-id since-id limit)
   (let ((json (http-get app (format nil "/api/v1/accounts/~D/followers" id)
                         (options max-id since-id limit))))
-    (mapcar (lambda (plist)
-              (parse '<account> plist))
-            json)))
+    (parse-list '<account> json)))
 
 (defun following (app id &key max-id since-id limit)
   (let ((json (http-get app (format nil "/api/v1/accounts/~D/following" id)
                         (options max-id since-id limit))))
-    (mapcar (lambda (plist)
-              (parse '<account> plist))
-            json)))
+    (parse-list '<account> json)))
 
 (defun account-statuses (app id &key only-media exculude-replies max-id since-id limit)
   (let ((json (http-get app (format nil "/api/v1/accounts/~D/statuses" id)
                         (options only-media exculude-replies max-id since-id limit))))
-    (mapcar (lambda (plist)
-              (parse '<status> plist))
-            json)))
+    (parse-list '<status> json)))
 
 (defun follow-account (app id)
   (let ((plist (http-post app (format nil "/api/v1/accounts/~D/follow" id))))
@@ -81,25 +75,19 @@
                    (mapcar (lambda (id)
                              `("id[]" . ,(prin1-to-string id)))
                            ids))))
-    (mapcar (lambda (plist)
-              (parse '<relationship> plist))
-            json)))
+    (parse-list '<relationship> json)))
 
 (defun search-accounts (app query &key limit)
   (let ((json (http-get app
                         "/api/v1/accounts/search"
                         (acons "q" query (options limit)))))
-    (mapcar (lambda (plist)
-              (parse '<account> plist))
-            json)))
+    (parse-list '<account> json)))
 
 (defun blocks (app &key max-id sice-id limit)
   (let ((json (http-get app
                         "/api/v1/blocks"
                         (options max-id sice-id limit))))
-    (mapcar (lambda (plist)
-              (parse '<account> plist))
-            json)))
+    (parse-list '<account> json)))
 
 
 (defun search-content (app query resolve)
