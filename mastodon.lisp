@@ -26,7 +26,7 @@
       `(let ((,glist '()))
          ,@(mapcar (lambda (o)
                      `(when ,(option-variable o)
-                        (push (cons ,(option-name o) ',(option-variable o))
+                        (push (cons ,(option-name o) ,(option-variable o))
                               ,glist)))
                    (reverse options))
          ,glist)))
