@@ -2,24 +2,7 @@
   (:use #:cl
         #:mastodon.config
         #:mastodon.entity
-        #:mastodon.base)
-  (:export #:get-account
-           #:get-current-user
-           #:followers
-           #:following
-           #:account-statuses
-           #:follow-account
-           #:unfollow-account
-           #:block-account
-           #:unblock-account
-           #:mute-account
-           #:unmute-account
-           #:relationships
-           #:search-accounts
-
-           #:search-content
-           #:post-status
-           ))
+        #:mastodon.base))
 (in-package :mastodon)
 
 (defun option-variable (opt)
@@ -67,20 +50,21 @@
 
 (defmacro define-api (name http-method api (&rest vars) options result-type)
   (let ((_json (gensym)))
-    `(defun ,name (app ,@vars ,@(options-to-lambda-list options))
-       (let ((,_json
-              ,(let ((uri `(format nil ,api ,@vars)))
-                 (ecase http-method
-                   (:get `(http-get app ,uri ,(gen-options options)))
-                   (:post `(http-post app ,uri ,(gen-options options)))
-                   (:delete `(http-delete app ,uri))))))
-         (declare (ignorable ,_json))
-         ,(cond ((null result-type) (values))
-                ((and (consp result-type)
-                      (eq 'list (car result-type)))
-                 `(parse-list ',(cadr result-type) ,_json))
-                (t
-                 `(parse ',result-type ,_json)))))))
+    `(export
+      (defun ,name (app ,@vars ,@(options-to-lambda-list options))
+        (let ((,_json
+               ,(let ((uri `(format nil ,api ,@vars)))
+                  (ecase http-method
+                    (:get `(http-get app ,uri ,(gen-options options)))
+                    (:post `(http-post app ,uri ,(gen-options options)))
+                    (:delete `(http-delete app ,uri))))))
+          (declare (ignorable ,_json))
+          ,(cond ((null result-type) (values))
+                 ((and (consp result-type)
+                       (eq 'list (car result-type)))
+                  `(parse-list ',(cadr result-type) ,_json))
+                 (t
+                  `(parse ',result-type ,_json))))))))
 
 (define-api get-account :get "/api/v1/accounts/~D" (id) () <account>)
 (define-api get-current-user :get "/api/v1/accounts/verify_credentials" () () <account>)
@@ -132,6 +116,17 @@
   (text &key in-reply-to-id media-ids sensitive spoiler-text visibility)
   <status>)
 (define-api delete-status :delete "/api/v1/statuses/~D" (id) () nil)
+(define-api reblog :post "/api/v1/statuses/~D/reblog" (id) () <status>)
+(define-api unreblog :post "/api/v1/statuses/~D/unreblog" (id) () <status>)
+(define-api favourite :post "/api/v1/statuses/~D/favourite" (id) () <status>)
+(define-api unfavourite :post "/api/v1/statuses/~D/unfavourite" (id) () <status>)
+(define-api get-timeline-home :get "/api/v1/timeline/home" () (&key local max-id since-id limit)
+  (list <status>))
+(define-api get-timeline-public :get "/api/v1/timeline/public" () (&key local max-id since-id limit)
+  (list <status>))
+(define-api get-timeline-hashtag :get "/api/v1/timeline/tag/~D" (hashtag)
+  (&key local max-id since-id limit)
+  (list <status>))
 
 
 #|
@@ -173,12 +168,12 @@
 * GET /api/v1/statuses/:id/favourited_by
 * POST /api/v1/statuses
 * DELETE /api/v1/statuses/:id
-- POST /api/v1/statuses/:id/reblog
-- POST /api/v1/statuses/:id/unreblog
-- POST /api/v1/statuses/:id/favourite
-- POST /api/v1/statuses/:id/unfavourite
-- GET /api/v1/timelines/home
-- GET /api/v1/timelines/public
-- GET /api/v1/timelines/tag/:hashtag
+* POST /api/v1/statuses/:id/reblog
+* POST /api/v1/statuses/:id/unreblog
+* POST /api/v1/statuses/:id/favourite
+* POST /api/v1/statuses/:id/unfavourite
+* GET /api/v1/timelines/home
+* GET /api/v1/timelines/public
+* GET /api/v1/timelines/tag/:hashtag
 
 |#
