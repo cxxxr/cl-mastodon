@@ -22,6 +22,16 @@
            ))
 (in-package :mastodon)
 
+(defmacro options (&rest options)
+  (let ((glist (gensym)))
+    `(let ((,glist '()))
+       ,@(mapcar (lambda (o)
+                   `(when ,o
+                      (push (cons ,(ppcre:regex-replace-all "-" (string o) "_") ',o)
+                            ,glist)))
+                 (reverse options))
+       ,glist)))
+
 (defun get-account (app id)
   (let ((plist (http-get app (format nil "/api/v1/accounts/~D" id))))
     (parse '<account> plist)))
@@ -98,17 +108,12 @@
   (let ((plist
          (http-post app
                     "/api/v1/statuses"
-                    `(("status" . ,text)
-                      ,@(when in-reply-to-id
-                          `(("in_reply_to_id" . ,in-reply-to-id)))
-                      ,@(when media-ids
-                          `(("media_ids" . ,media-ids)))
-                      ,@(when sensitive
-                          `(("sensitive" . ,sensitive)))
-                      ,@(when spoiler-text
-                          `(("spoiler_text" . ,spoiler-text)))
-                      ,@(when visibility
-                          `(("visibility" . ,visibility)))))))
+                    (acons "status" text
+                           (options in-reply-to-id
+                                    media-ids
+                                    sensitive
+                                    spoiler-text
+                                    visibility)))))
     (parse '<status> plist)))
 
 

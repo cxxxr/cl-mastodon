@@ -3,8 +3,7 @@
                "jonathan"
                "alexandria")
   :serial t
-  :components ((:file "util")
-               (:file "config")
+  :components ((:file "config")
                (:file "entity")
                (:file "base")
                (:file "mastodon")))
