@@ -18,13 +18,9 @@
   value)
 
 (defclass app ()
-  ((schema
-    :initarg :schema
-    :initform "https"
-    :reader app-schema)
-   (server-name
-    :initarg :server-name
-    :reader app-server-name
+  ((server
+    :initarg :server
+    :reader app-server
     :type string)
    (client-secret
     :accessor app-client-secret
@@ -40,15 +36,12 @@
     :accessor app-access-token
     :type access-token)))
 
-(defun make-app (server-name &optional (secure t))
-  (make-instance 'app
-                 :server-name server-name
-                 :schema (if secure "https" "http")))
+(defun make-app (server)
+  (make-instance 'app :server (string-right-trim "/" server)))
 
 (defun url (app api &optional query)
-  (format nil "~A://~A~A~A"
-          (app-schema app)
-          (app-server-name app)
+  (format nil "~A/~A~A"
+          (app-server app)
           api
           (if (null query)
               ""
