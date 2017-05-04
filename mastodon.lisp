@@ -2,7 +2,25 @@
   (:use #:cl
         #:mastodon.config
         #:mastodon.entity
-        #:mastodon.base))
+        #:mastodon.base)
+  (:export #:<account>
+           #:<application>
+           #:<attachment>
+           #:<card>
+           #:<context>
+           #:<error>
+           #:<instance>
+           #:<mention>
+           #:<notification>
+           #:<relationship>
+           #:<report>
+           #:<results>
+           #:<status>
+           #:make-app
+           #:register-app
+           #:get-authorization-uri
+           #:init-access-token-with-code
+           #:init-access-token-with-password))
 (in-package :mastodon)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
