@@ -10,3 +10,5 @@
 (get-current-user *app*) ; => #<ACCOUNT ...>
 ```
 
+## LICENSE
+MIT
