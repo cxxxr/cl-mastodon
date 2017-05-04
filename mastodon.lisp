@@ -199,3 +199,9 @@
 * GET /api/v1/timelines/tag/:hashtag
 
 |#
+
+#|
+(defparameter app (make-app "https://mstdn.jp"))
+(get-authorization-uri app)
+(init-access-token-with-code app code)
+|#
