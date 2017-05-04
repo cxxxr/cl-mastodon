@@ -2,7 +2,6 @@
   (:use #:cl
         #:mastodon.config)
   (:export #:make-app
-           #:register-app
            #:get-authorization-uri
            #:init-access-token-with-code
            #:init-access-token-with-password
@@ -38,7 +37,9 @@
     :type access-token)))
 
 (defun make-app (server)
-  (make-instance 'app :server (string-right-trim "/" server)))
+  (let ((app (make-instance 'app :server (string-right-trim "/" server))))
+    (register-app app)
+    app))
 
 (defun url (app api &optional query)
   (format nil "~A/~A~A"

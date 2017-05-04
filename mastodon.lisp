@@ -3,7 +3,8 @@
         #:mastodon.config
         #:mastodon.entity
         #:mastodon.base)
-  (:export #:<account>
+  (:export #:*use-config-directory*
+           #:<account>
            #:<application>
            #:<attachment>
            #:<card>
@@ -17,7 +18,6 @@
            #:<results>
            #:<status>
            #:make-app
-           #:register-app
            #:get-authorization-uri
            #:init-access-token-with-code
            #:init-access-token-with-password))
