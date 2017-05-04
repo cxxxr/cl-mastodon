@@ -81,9 +81,9 @@
           ,(cond ((null result-type) (values))
                  ((and (consp result-type)
                        (eq 'list (car result-type)))
-                  `(parse-list ',(cadr result-type) ,_json))
+                  `(objectize-list ',(cadr result-type) ,_json))
                  (t
-                  `(parse ',result-type ,_json))))))))
+                  `(objectize ',result-type ,_json))))))))
 
 (define-api get-account :get "/api/v1/accounts/~D" (id) () <account>)
 (define-api get-current-user :get "/api/v1/accounts/verify_credentials" () () <account>)

@@ -13,8 +13,8 @@
            #:<report>
            #:<results>
            #:<status>
-           #:parse
-           #:parse-list))
+           #:objectize
+           #:objectize-list))
 (in-package :mastodon.entity)
 
 (defmacro define-entity (name &body attributes)
@@ -129,48 +129,48 @@
   name
   url)
 
-(defgeneric parse (entity plist))
+(defgeneric objectize (entity plist))
 
-(defmethod parse (entity plist)
+(defmethod objectize (entity plist)
   (apply #'make-instance entity plist))
 
-(defmethod parse ((entity (eql '<context>)) plist)
+(defmethod objectize ((entity (eql '<context>)) plist)
   (make-instance entity
                  :|ancestores| (mapcar (lambda (plist)
-                                         (parse '<status> plist))
+                                         (objectize '<status> plist))
                                        (getf plist :|ancestores|))
                  :|descendants| (mapcar (lambda (plist)
-                                          (parse '<status> plist))
+                                          (objectize '<status> plist))
                                         (getf plist :|descendants|))))
 
-(defmethod parse ((entity (eql '<notification>)) plist)
+(defmethod objectize ((entity (eql '<notification>)) plist)
   (make-instance entity
                  :|id| (getf plist :|id|)
                  :|type| (getf plist :|type|)
                  :|created_at| (getf plist :|created_at|)
-                 :|account| (parse '<account> (getf plist :|account|))
-                 :|status| (parse '<status> (getf plist :|status|))))
+                 :|account| (objectize '<account> (getf plist :|account|))
+                 :|status| (objectize '<status> (getf plist :|status|))))
 
-(defmethod parse ((entity (eql '<results>)) plist)
+(defmethod objectize ((entity (eql '<results>)) plist)
   (make-instance entity
                  :|accounts| (mapcar (lambda (plist)
-                                       (parse '<account> plist))
+                                       (objectize '<account> plist))
                                      (getf plist :|accounts|))
                  :|statuses| (mapcar (lambda (status)
-                                       (parse '<status> status))
+                                       (objectize '<status> status))
                                      (getf plist :|statuses|))
                  :|hashtags| (getf plist :|hashtags|)))
 
-(defmethod parse ((entity (eql '<status>)) plist)
+(defmethod objectize ((entity (eql '<status>)) plist)
   (make-instance entity
                  :|id| (getf plist :|id|)
                  :|uri| (getf plist :|uri|)
                  :|url| (getf plist :|url|)
-                 :|account| (parse '<account> (getf plist :|account|))
+                 :|account| (objectize '<account> (getf plist :|account|))
                  :|in_reply_to_id| (getf plist :|in_reply_to_id|)
                  :|in_reply_to_account_id| (getf plist :|in_reply_to_account_id|)
                  :|reblog| (let ((reblog (getf plist :|reblog|)))
-                             (if (null reblog) nil (parse '<status> (getf plist :|reblog|))))
+                             (if (null reblog) nil (objectize '<status> (getf plist :|reblog|))))
                  :|content| (getf plist :|content|)
                  :|created_at| (getf plist :|created_at|)
                  :|reblogs_count| (getf plist :|reblogs_count|)
@@ -181,17 +181,17 @@
                  :|spoiler_text| (getf plist :|spoiler_text|)
                  :|visibility| (getf plist :|visibility|)
                  :|media_attachments| (mapcar (lambda (plist)
-                                                (parse '<attachment> plist))
+                                                (objectize '<attachment> plist))
                                               (getf plist :|media_attachments|))
                  :|mentions| (mapcar (lambda (plist)
-                                       (parse '<mention> plist))
+                                       (objectize '<mention> plist))
                                      (getf plist :|mentions|))
                  :|tags| (mapcar (lambda (plist)
-                                   (parse '<tag> plist))
+                                   (objectize '<tag> plist))
                                  (getf plist :|tags|))
-                 :|application| (parse '<application> (getf plist :|application|))))
+                 :|application| (objectize '<application> (getf plist :|application|))))
 
-(defun parse-list (entity list)
+(defun objectize-list (entity list)
   (mapcar (lambda (plist)
-            (parse entity plist))
+            (objectize entity plist))
           list))
