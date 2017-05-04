@@ -8,7 +8,8 @@
            #:init-access-token-with-password
            #:http-get
            #:http-post
-           #:http-delete))
+           #:http-delete
+           #:http-patch))
 (in-package :mastodon.base)
 
 (defstruct access-token
@@ -100,7 +101,8 @@
     (f app
        `(("grant_type" . "password")
          ("username" . ,username)
-         ("password" . ,password)))))
+         ("password" . ,password)
+         ("scope" . "read write follow")))))
 
 (defun headers (app)
   `(("Authorization" .
@@ -121,3 +123,9 @@
 (defun http-delete (app api)
   (dex:delete (url app api)
               :headers (headers app)))
+
+(defun http-patch (app api &optional content)
+  (dex:request (url app api)
+               :method :patch
+               :headers (headers app)
+               :content content))

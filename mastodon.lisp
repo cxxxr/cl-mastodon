@@ -14,7 +14,7 @@
   
   (defun option-name (opt)
     (etypecase opt
-      (symbol (ppcre:regex-replace-all "-" (string opt) "_"))
+      (symbol (ppcre:regex-replace-all "-" (string-downcase opt) "_"))
       (string opt)
       (cons (second opt))))
   
@@ -57,7 +57,8 @@
                   (ecase http-method
                     (:get `(http-get app ,uri ,(gen-options options)))
                     (:post `(http-post app ,uri ,(gen-options options)))
-                    (:delete `(http-delete app ,uri))))))
+                    (:delete `(http-delete app ,uri))
+                    (:patch `(http-patch app ,uri ,(gen-options options)))))))
           (declare (ignorable ,_json))
           ,(cond ((null result-type) (values))
                  ((and (consp result-type)
@@ -68,6 +69,9 @@
 
 (define-api get-account :get "/api/v1/accounts/~D" (id) () <account>)
 (define-api get-current-user :get "/api/v1/accounts/verify_credentials" () () <account>)
+(define-api update-account :patch "/api/v1/accounts/update_credentials" ()
+  (&key display-name note avater header)
+  nil)
 (define-api followers :get "/api/v1/accounts/~D/followers" (id) (&key max-id since-id limit)
   (list <account>))
 (define-api following :get "/api/v1/accounts/~D/following" (id) (&key max-id since-id limit)
@@ -133,7 +137,7 @@
 
 * GET /api/v1/accounts/:id
 * GET /api/v1/accounts/verify_credentials
-- PATCH /api/v1/accounts/update_credentials
+* PATCH /api/v1/accounts/update_credentials
 * GET /api/v1/accounts/:id/followers
 * GET /api/v1/accounts/:id/following
 * GET /api/v1/accounts/:id/statuses
